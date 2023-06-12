@@ -80,52 +80,11 @@ else:
 
 # Create a custom trading environment
 class TradingEnvironment(gym.Env):
-    def __init__(self):
-        # Initialize your trading environment
-        # Set up variables, data, and any necessary components
-        
-    def reset(self):
-        # Reset the environment to its initial state
-        # Return the initial observation
-        
-    def step(self, action):
-        # Take an action in the environment
-        # Perform necessary calculations, update state, and return the next observation, reward, and done flag
-
-# Create an instance of your custom trading environment
-env = TradingEnvironment()
-
-# Define the PPO agent
-model = PPO("MlpPolicy", env, verbose=1)
-
-# Train the PPO agent
-model.learn(total_timesteps=10000)
-
-# Save the trained model
-model.save("ppo_trained_model")
-
-# Load the trained model
-loaded_model = PPO.load("ppo_trained_model")
-
-# Use the loaded model to make predictions
-obs = env.reset()
-done = False
-while not done:
-    action, _ = loaded_model.predict(obs)
-    obs, reward, done, _ = env.step(action)
-    # Perform necessary actions based on the prediction (e.g., execute a trade)
-
-# Close the environment
-env.close()
-import gym
-from gym import spaces
-
-class TradingEnvironment(gym.Env):
     def __init__(self, data):
         super(TradingEnvironment, self).__init__()
         self.data = data
-        self.action_space = spaces.Discrete(3)  # Assuming 3 discrete actions: 0 (Sell), 1 (Hold), 2 (Buy)
-        self.observation_space = spaces.Box(low=0, high=1, shape=(window_size,), dtype=np.float32)
+        self.action_space = gym.spaces.Discrete(3)  # Assuming 3 discrete actions: 0 (Sell), 1 (Hold), 2 (Buy)
+        self.observation_space = gym.spaces.Box(low=0, high=1, shape=(window_size,), dtype=float)
         self.current_step = window_size
 
     def reset(self):
@@ -153,7 +112,7 @@ class TradingEnvironment(gym.Env):
 
     def _get_observation(self):
         # Get the observation for the current step
-        observation = self.data[self.current_step - window_size : self.current_step]
+        observation = self.data[self.current_step - window_size: self.current_step]
         return observation
 
     def _take_action(self, action, current_price, next_price):
@@ -165,3 +124,28 @@ class TradingEnvironment(gym.Env):
         return reward
 
 
+# Create an instance of your custom trading environment
+env = TradingEnvironment(data['Close'].values)
+
+# Define the PPO agent
+model = PPO("MlpPolicy", env, verbose=1)
+
+# Train the PPO agent
+model.learn(total_timesteps=10000)
+
+# Save the trained model
+model.save("ppo_trained_model")
+
+# Load the trained model
+loaded_model = PPO.load("ppo_trained_model")
+
+# Use the loaded model to make predictions
+obs = env.reset()
+done = False
+while not done:
+    action, _ = loaded_model.predict(obs)
+    obs, reward, done, _ = env.step(action)
+    # Perform necessary actions based on the prediction (e.g., execute a trade)
+
+# Close the environment
+env.close()
